@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+</head>
+<body>
+    <div class="ui container">
+        <div class="top-padding"></div>
+        <div class="ui padded segment">
+            <h1>{{event_name}}</h1>
+            <h3>Hosted by: {{host}}</h3>
+            <div class="ui grid">
+                <div class="four wide column">Open to: <b>{{open_to}}</b></div>
+                <div class="four wide column">Signed up so far: <b>{{signup_count}}</b></div>
+                <div class="four wide column"> Start date: <b>{{start_date}}</b></div>
+                <div class="four wide column">End date: <b>{{end_date}}</b></div>
+            </div>
+        </div>
+        <div class="ui padded segment">
+            <a href="{{ url_for('load_session', eventID=eventID) }}">
+                <button type="button" class="ui button blue">Back to session</button>
+            </a>
+            <a href="{{ url_for('mock_person', eventID=eventID) }}">
+                <button type="button" class="ui right floated button green">Add mock participant</button>
+            </a>
+            <a href="{{ url_for('match_participants', eventID=eventID) }}">
+                <button type="button" class="ui right floated button orange">Calculate Matches</button>
+            </a>
+            <br><br>
+            <div class="ui four cards">
+                {% for person in participants %}
+                <!--<div class="four wide column">-->
+                <div class="ui card">
+                    <div class="content">
+                        <div class="four wide column">
+                            <b>{{person[2]}}</b><br>
+                            <b>SID</b>: {{person[0]}}<br>
+                            <b>Email</b>: {{person[3]}}<br>
+                            <b>Location</b>: {{person[4]}}<br>
+                            <b>Title</b>: {{person[5]}}<br>
+                            <b>LOB</b>: {{person[6]}}<br>
+                            <b>Team</b>: {{person[7]}}<br>
+                            <b>Skills</b>: {{person[8]}}<br>
+                            <b>Interests</b>: {{person[9]}}
+                        </div>
+                    </div>
+    
+                    <div>
+                        <button
+                            class="ui left floated button"
+                            style="width: 45%;"
+                            onclick="copy_text('{{person[3]}}', this)"
+                        >
+                            Copy Email
+                        </button>
+                        <form
+                            action="{{ url_for('remove_from_event', eventID=eventID, SID=person[0]) }}"
+                            onsubmit="return confirm('Are you sure you want to remove {{person[2]}} from this event')"
+                            method="POST"
+                        >
+                            <button class="ui right floated button red" style="width: 40%;">Remove</button>
+                        </form> 
+                    </div>
+                </div>
+                <!--<div class="ui horizontal divider hidden"></div>-->
+                {%endfor%}
+            </div>
+        </div> 
+        <br>
+    </div>
+
+    <script>
+        function copy_text(text, btn) {
+            navigator.clipboard.writeText(text);
+            btn.innerHTML = "Copied!"
+        }
+    </script>
+</body>
+<style>
+    .custom-card {
+        width: 100%;
+        padding-top: 10px;
+
+        min-height: 100%;
+
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-end;
+
+        -webkit-box-pack: justify;
+        box-shadow: 0 0 5px #aeaeae;
+
+        border-radius: 0.5em;
+
+        font-size: 0.9em;
+
+        transition: 200ms ease-in-out;
+        transition-property: box-shadow, border-left;
+    }
+
+    .custom-card.active {
+        border-left: 10px solid #5C8D89;
+    }
+
+    div.custom-card {
+        text-decoration: none;
+        color: black;
+    }
+</style>

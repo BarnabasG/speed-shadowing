@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+<head></head>
+<body>
+    <div class="ui container">
+      <div class="ui segment basic">
+        <div class="ui padded segment">
+          <h1>Welcome to the SEP Speed Shadowing home page!</h1>
+          <div class="ui grid">
+            <a>Current Shadowing Sessions</a> <a>Past Shadowing Sessions</a> <a>Get in contact</a>
+          </div>
+        </div>
+        <div class="ui padded segment">
+          <h2>Current Shadowing Sessions</h2>
+          <div class="ui segment">
+            <a href="/knowledge/browse">
+              <button class="fluid ui button">Browse for an experienced colleague</button>
+            </a>
+          </div>
+        </div>
+        <div class="ui padded segment">
+          <h2>Current Shadowing Sessions</h2>
+          <!--New session creation-->
+          {% if active_events is not none %}
+            {% for event in active_events %}
+            <div class="ui segment">
+              <a href="/events/{{event[0]}}">
+                <button class="fluid ui button">{{event[1]}}</button>
+              </a>
+            </div>
+            {% endfor %}
+          {% else %}
+            <h2>No active events</h2>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+</body>
+<style>
+  .left {
+    float: left;
+  }
+  
+  .right { 
+    float: right;
+  }
+  
+  .block:after {
+    content: ":"
+  }
+</style>

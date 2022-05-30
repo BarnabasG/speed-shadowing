@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+<head>
+    <style>
+      input {
+        background-color: #eee;
+        border: none;
+        padding: 12px 15px;
+        margin: 8px 0;
+        width: 90%;
+        outline: none;
+      }
+      input:focus {
+        background-color: #ddd;
+      }
+      .inputish {
+        background-color: #eee;
+        border: none;
+        padding: 12px 15px;
+        margin: 8px 0;
+        width: 90%;
+        outline: none;
+      }
+      .inputish:focus {
+        background-color: #ddd;
+      }
+      .third {
+        float: left;
+        width: 33%;
+      }
+      .quart {
+        float: left;
+        width: 25%;
+      }
+      .column {
+        float: left;
+        width: 50%;
+      }
+      /* Clear floats after the columns */
+      .row:after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+      .top-padded {
+        padding-top: 10px;
+      }
+
+      @media screen and (max-width: 600px) {
+        .column {
+          width: 100%;
+        }
+      }
+    </style>
+</head>
+
+<body onload="populate()">
+
+  <div class="ui container">
+    <div class="ui segment basic">
+      {% if errors is not none %}
+      {% if errors|length > 0 %}
+      <div class="ui red message">
+        {% for error in errors %}
+        <div class="ui list">
+          <div class="item">{{ error }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endif %}
+      <div id="js_error"></div>
+      <div class="ui padded segment">
+        <div class="ui pointing secondary menu">
+            <a class="active item" href="{{ url_for('browse_knowledge') }}">
+                Browse
+            </a>
+            <a class="item" href="{{ url_for('register_knowledge') }}">
+                Register
+            </a>
+        </div>
+        <form action="{{ url_for('browse_knowledge') }}" method="POST" onsubmit="return submitForm()">
+          <a href="{{ url_for('home') }}">
+            <button type="button" class="ui right floated button blue">Back to menu</button>
+          </a>
+          <h3>Search</h3>
+          Enter skills:
+          <div class="row">
+            <div class="column">
+              <input type="text" id="skillsInput" placeholder="Start typing a skill..."
+                    autocomplete="off" oninput="searchInterest('skillsInput', 'found_skills', 'selected_skills', 'skill');"/>
+            </div>
+            <div class="column">
+              <div class="ui black padded segment" style="max-width: 90%;">
+                <div class="ui grid container fluid" id="selected_skills"></div>
+              </div>
+              <input type="hidden" id="selected_skills_data" name = "selected_skills_data" value=""/>
+            </div>
+          </div>
+          <div class="ui grid container fluid" id="found_skills"></div>
+          <br>
+          <button type="submit" class="ui right floated button green">Search</button>
+          <br><br>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+<script>
+
+  function searchInterest(inputID, box, target, type) {
+    let xhttp;
+    let skill = document.getElementById(inputID).value;
+    if (skill === "") {
+      document.getElementById(box).innerHTML = "";
+    }
+    xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+      if (this.readyState === 4 && this.status === 200 && skill !== "") {
+        let json_response = JSON.parse(this.response);
+
+        document.getElementById(box).innerHTML = "";
+
+        for (let skill of json_response) {
+          
+          var ID = type + skill[1]
+          var selected = document.getElementById(ID);
+
+          if (selected) {
+            let html = `<button type="button" class="ui small black basic button" onclick="removeSkill('${ID}', '${box}', '${target}', '${inputID}', '${type}')">
+                        ${skill[2]}
+                      </button>&nbsp;`;
+            document.getElementById(box).innerHTML += html;
+          } else {
+            let html = `<button type="button" class="ui small grey basic button" onclick="addSkill('${ID}', '${skill[2]}', '${box}', '${target}', '${inputID}', '${type}')">
+                        ${skill[2]}
+                      </button>&nbsp;`;
+            document.getElementById(box).innerHTML += html;
+          }
+        }
+      }
+    };
+    xhttp.open("GET", "../search_query?chars=" + skill);
+    xhttp.send();
+  }
+
+  function addSkill(skillID, skill, box, target, inputID, type) {
+    let html = `<button type="button" id="${skillID}" class="ui small black basic button" onclick="removeSkill('${skillID}', '${box}', '${target}', '${inputID}', '${type}')">
+                  ${skill}
+                </button>`;
+    document.getElementById(target).innerHTML += html;
+    searchInterest(inputID, box, target, type)
+  }
+
+  function removeSkill(skillID, box, target, inputID, type) {
+    document.getElementById(skillID).remove()
+    searchInterest(inputID, box, target, type)
+  }
+
+  function populate() {
+    populateSkills()
+    populateInterests()
+  }
+
+  function submitForm() {
+    var valid_skills=true
+
+    console.log("hi")
+
+    var selectedSkills = document.getElementById("selected_skills").querySelectorAll("button");
+    if (selectedSkills.length == 0) {
+      valid_skills = false
+    } else {
+      let skillList = ''
+      for (let skill of selectedSkills) {
+        skillList = skillList.concat(skill.textContent.trim(),'|')
+      }
+      document.getElementById("selected_skills_data").value = skillList;
+    }
+
+    console.log(skillList)
+
+    if (!valid_skills) {
+      let html = `<div class="ui red message">
+                    <div class="ui list">`
+      html += `<div class="item">Please fill in skills</div>`
+      html += ` </div>
+              </div>`
+      document.getElementById("js_error").innerHTML = html;
+      return false;
+    }
+
+    return true;
+  }
+
+</script>
+
+</html>

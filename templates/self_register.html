@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css">
+<head>
+    <style>
+      input {
+        background-color: #eee;
+        border: none;
+        padding: 12px 15px;
+        margin: 8px 0;
+        width: 90%;
+        outline: none;
+      }
+      input:focus {
+        background-color: #ddd;
+      }
+      .inputish {
+        background-color: #eee;
+        border: none;
+        padding: 12px 15px;
+        margin: 8px 0;
+        width: 90%;
+        outline: none;
+      }
+      .inputish:focus {
+        background-color: #ddd;
+      }
+      .third {
+        float: left;
+        width: 33%;
+      }
+      .quart {
+        float: left;
+        width: 25%;
+      }
+      .column {
+        float: left;
+        width: 50%;
+      }
+      /* Clear floats after the columns */
+      .row:after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+      .top-padded {
+        padding-top: 10px;
+      }
+
+      @media screen and (max-width: 600px) {
+        .column {
+          width: 100%;
+        }
+      }
+    </style>
+</head>
+
+<body onload="populate()">
+
+  <div class="ui container">
+    <div class="ui segment basic">
+      {% if errors is not none %}
+      {% if errors|length > 0 %}
+      <div class="ui red message">
+        {% for error in errors %}
+        <div class="ui list">
+          <div class="item">{{ error }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endif %}
+      <div id="js_error"></div>
+      <div class="ui padded segment">
+        <div class="ui pointing secondary menu">
+            <a class="item" href="{{ url_for('browse_knowledge') }}">
+                Browse
+            </a>
+            <a class="active item" href="{{ url_for('register_knowledge') }}">
+                Register
+            </a>
+        </div>
+        <form action="{{ url_for('register_knowledge') }}" method="POST" onsubmit="return submitForm()">
+          <a href="{{ url_for('home') }}">
+            <button type="button" class="ui right floated button blue">Back to menu</button>
+          </a>
+          <h1>Sign up to network and share your knowledge</h1>
+          <br>
+          <div class="row">
+            <input type="text" name="name" id="name" placeholder="Name" value="{{details['name']}}" style="width: 95%;" required/>
+            <div class="column">
+              <input type="text" name="sid" id="sid" placeholder="SID" value="{{details['sid']}}" required/>
+              <input type="text" name="email" id="email" placeholder="Email" value="{{details['email']}}" required/>
+              <div class="field inputish">
+                Location:&nbsp;
+                <select name="location" id="location">
+                  <option value="location">...</option>
+                  <option value="Bournemouth">Bournemouth</option>
+                  <option value="Dublin">Dublin</option>
+                  <option value="Glasgow">Glasgow</option>
+                  <option value="Israel">Israel</option>
+                  <option value="London">London</option>
+                </select>
+              </div>
+            </div>
+            <div class="column">
+              <input type="text" name="title" placeholder="Job title" value="{{details['title']}}"/>
+              <input type="text" name="lob" placeholder="LOB" value="{{details['lob']}}"/>
+              <input type="text" name="team" placeholder="Team name" value="{{details['team']}}"/>
+            </div>
+          </div>
+          <br><br>
+          <div class="row">
+            <div class="column">
+              Enter your skills and relevant knowledge here:
+              <input type="text" id="skillsInput" placeholder="Start typing a skill..."
+                    autocomplete="off" oninput="searchInterest('skillsInput', 'found_skills', 'selected_skills', 'skill');"/>
+              <br><br>
+              <div class="ui grid container fluid" id="found_skills"></div>
+              <br>
+              <div class="ui black padded segment" style="max-width: 90%;">
+                <div class="ui grid container fluid" id="selected_skills"></div>
+              </div>
+              <input type="hidden" id="selected_skills_data" name = "selected_skills_data" value=""/>
+            </div>
+            <div class="column">
+              Enter the skills you would be looking to learn about here:
+              <input type="text" id="interestsInput" placeholder="Start typing an interest..."
+                    autocomplete="off" oninput="searchInterest('interestsInput', 'found_interests', 'selected_interests', 'interest');"/>
+              <br><br>
+              <div class="ui grid container fluid" id="found_interests"></div>
+              <br>
+              <div class="ui black padded segment" style="max-width: 90%;">
+                <div class="ui grid container fluid" id="selected_interests"></div>
+              </div>
+            </div>
+            <input type="hidden" id="selected_interests_data" name="selected_interests_data" value=""/>
+          </div>
+          <br>
+          <button type="sumbit" class="ui right floated button green">Submit</button>
+          <br><br>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</body>
+
+<script>
+
+  function searchInterest(inputID, box, target, type) {
+    let xhttp;
+    let skill = document.getElementById(inputID).value;
+    if (skill === "") {
+      document.getElementById(box).innerHTML = "";
+    }
+    xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function () {
+      if (this.readyState === 4 && this.status === 200 && skill !== "") {
+        let json_response = JSON.parse(this.response);
+        console.log(json_response);
+
+        document.getElementById(box).innerHTML = "";
+
+        for (let skill of json_response) {
+          
+          var ID = type + skill[1]
+          var selected = document.getElementById(ID);
+
+          if (selected) {
+            let html = `<button type="button" class="ui small black basic button" onclick="removeSkill('${ID}', '${box}', '${target}', '${inputID}', '${type}')">
+                        ${skill[2]}
+                      </button>&nbsp;`;
+            document.getElementById(box).innerHTML += html;
+          } else {
+            let html = `<button type="button" class="ui small grey basic button" onclick="addSkill('${ID}', '${skill[2]}', '${box}', '${target}', '${inputID}', '${type}')">
+                        ${skill[2]}
+                      </button>&nbsp;`;
+            document.getElementById(box).innerHTML += html;
+          }
+        }
+      }
+    };
+    xhttp.open("GET", "search_query?chars=" + skill);
+    xhttp.send();
+  }
+
+  function addSkill(skillID, skill, box, target, inputID, type) {
+    let html = `<button type="button" id="${skillID}" class="ui small black basic button" onclick="removeSkill('${skillID}', '${box}', '${target}')">
+                  ${skill}
+                </button>`;
+    document.getElementById(target).innerHTML += html;
+    searchInterest(inputID, box, target, type)
+  }
+
+  function removeSkill(skillID, box, target, inputID, type) {
+    document.getElementById(skillID).remove()
+    searchInterest(inputID, box, target, type)
+  }
+
+  function populate() {
+    populateSkills()
+    populateInterests()
+  }
+
+  function populateSkills() {
+    if ("{{details['skills']}}") {
+      var skills = "{{details['skills']}}".split('|')
+      for (let skill of skills) {
+        let details = skill.split('//')
+        let ID = 'skill' + details[0]
+        addSkill(ID, details[1], 'found_skills', 'selected_skills', 'skillsInput', 'skill')
+      }
+    }
+  }
+
+  function populateInterests() {
+    if ("{{details['interests']}}") {
+      var interests = "{{details['interests']}}".split('|')
+      for (let interest of interests) {
+        let details = interest.split('//')
+        let ID = 'interest' + details[0]
+        addSkill(ID, details[1], 'found_interests', 'selected_interests', 'interestsInput', 'interest')
+      }
+    }
+  }
+
+
+  function submitForm() {
+    var valid_skills=true, valid_interests=true
+
+    var selectedSkills = document.getElementById("selected_skills").querySelectorAll("button");
+    if (selectedSkills.length == 0) {
+      valid_skills = false
+    } else {
+      let skillList = ''
+      for (let skill of selectedSkills) {
+        skillList = skillList.concat(skill.textContent.trim(),'|')
+      }
+      document.getElementById("selected_skills_data").value = skillList;
+    }
+
+    var selectedInterests = document.getElementById("selected_interests").querySelectorAll("button");
+    if (selectedInterests.length == 0) {
+      valid_interests = false
+    } else {
+      let interestList = ''
+      for (let interest of selectedInterests.values()) {
+        interestList = interestList.concat(interest.textContent.trim(),'|')
+      }
+      document.getElementById("selected_interests_data").value = interestList;
+    }
+
+    if (!valid_skills || !valid_interests) {
+      let html = `<div class="ui red message">
+                    <div class="ui list">`
+      if (!valid_skills) {
+        html += `<div class="item">Please fill in skills</div>`
+      }
+      if (!valid_interests) {
+        html += `<div class="item">Please fill in interests</div>`
+      }
+      html += ` </div>
+              </div>`
+      document.getElementById("js_error").innerHTML = html;
+      return false;
+    }
+
+    return true;
+  }
+
+
+</script>
+
+</html>
